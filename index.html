@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Library Manager</title>
+
+<style>
+body {
+    font-family: 'Segoe UI';
+    background: linear-gradient(to right, #667eea, #764ba2);
+}
+
+.container {
+    width: 80%;
+    margin: 40px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+h1 {
+    text-align: center;
+}
+
+input {
+    padding: 10px;
+    margin: 5px;
+    width: 28%;
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #5a67d8;
+}
+
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+th {
+    background: #667eea;
+    color: white;
+}
+
+#message {
+    margin-top: 10px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>📚 Library Manager</h1>
+
+    <input id="bookId" placeholder="Book ID">
+    <input id="bookName" placeholder="Book Name">
+    <input id="bookAuthor" placeholder="Author">
+
+    <br>
+
+    <button onclick="add()">Add</button>
+    <button onclick="update()">Update</button>
+    <button onclick="deleteBook()">Delete</button>
+    <button onclick="search()">Search</button>
+    <button onclick="showAll()">Show All</button>
+
+    <div id="message"></div>
+    <div id="output"></div>
+</div>
+
+<script>
+
+// AUTO LOAD DATA WHEN PAGE OPENS
+window.onload = function() {
+    showAll();
+};
+
+// ADD
+function add() {
+    let id = bookId.value;
+    let name = bookName.value;
+    let author = bookAuthor.value;
+
+    fetch(`http://127.0.0.1:8080/add?id=${id}&name=${name}&author=${author}`)
+    .then(r=>r.text())
+    .then(d=>{
+        message.innerText = "✅ " + d;
+        showAll();
+    });
+}
+
+// UPDATE
+function update() {
+    let id = bookId.value;
+    let name = bookName.value;
+    let author = bookAuthor.value;
+
+    fetch(`http://127.0.0.1:8080/update?id=${id}&name=${name}&author=${author}`)
+    .then(r=>r.text())
+    .then(d=>{
+        message.innerText = "🔄 " + d;
+        showAll();
+    });
+}
+
+// DELETE
+function deleteBook() {
+    let id = bookId.value;
+
+    fetch(`http://127.0.0.1:8080/delete?id=${id}`)
+    .then(r=>r.text())
+    .then(d=>{
+        message.innerText = "❌ " + d;
+        showAll();
+    });
+}
+
+// SEARCH
+function search() {
+    let name = bookName.value;
+
+    fetch(`http://127.0.0.1:8080/search?name=${name}`)
+    .then(r=>r.text())
+    .then(d=>{
+        if(d === "NOT_FOUND"){
+            message.innerText = "❌ Book not found";
+            output.innerHTML = "";
+        } else {
+            let c = d.split(",");
+            message.innerText = "✅ Book Found";
+
+            output.innerHTML = `
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Author</th>
+                </tr>
+                <tr>
+                    <td>${c[0]}</td>
+                    <td>${c[1]}</td>
+                    <td>${c[2]}</td>
+                </tr>
+            </table>
+            `;
+        }
+    });
+}
+
+// SHOW ALL
+function showAll() {
+    fetch("http://127.0.0.1:8080/books")
+    .then(r=>r.text())
+    .then(data=>{
+        let rows = data.trim();
+
+        if(rows === ""){
+            message.innerText = "⚠️ No data found";
+            return;
+        }
+
+        rows = rows.split("\n");
+
+        let html = `
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Author</th>
+            </tr>
+        `;
+
+        rows.forEach(r=>{
+            let c = r.split(",");
+            if(c.length === 3){
+                html += `<tr>
+                    <td>${c[0]}</td>
+                    <td>${c[1]}</td>
+                    <td>${c[2]}</td>
+                </tr>`;
+            }
+        });
+
+        html += "</table>";
+        output.innerHTML = html;
+    });
+}
+
+</script>
+
+</body>
+</html>
